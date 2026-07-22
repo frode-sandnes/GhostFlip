@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pepper's Ghost Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: Arial, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            max-width: 300px;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            color: #4db8ff;
+        }
+        p {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin: 0;
+            color: #ccc;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+</head>
+<body>
+
+    <div id="info-panel">
+        <h1>Pepper's Ghost Effect</h1>
+        <p>Use your mouse/touch to rotate, pan, and zoom the camera.</p>
+        <p style="margin-top: 8px;"><strong>True Planar Mirror:</strong> Uses <code>Reflector</code> for exact 1:1 scale reflections!</p>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // --- CONTROLS ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Default Camera Position
+        camera.position.set(0, 2, 20);
+        controls.target.set(0, 1, -2);
+        controls.update();
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        // Light for the hidden sphere
+        const ghostLight = new THREE.PointLight(0x00ffff, 3, 20);
+        ghostLight.position.set(0, -4, -4);
+        scene.add(ghostLight);
+
+        // General stage light
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 12, 5);
+        scene.add(dirLight);
+
+        // --- ENVIRONMENT & OBJECTS ---
+
+        // 1. Background Grid
+//        const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
+        const gridHelper = new THREE.GridHelper(30, 30, 0x00ff00, 0x004400);
+        gridHelper.rotation.x = Math.PI / 2;
+        gridHelper.position.set(0, 0, -24);  // ,, -14
+        scene.add(gridHelper);
+
+        // 2. Opaque Square Wall
+        const wallGeometry = new THREE.PlaneGeometry(6, 6);
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x1f1f2e, 
+            roughness: 0.8, 
+            side: THREE.DoubleSide 
+        });
+        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        wall.position.set(0, -1, -4);
+        scene.add(wall);
+
+        // 3. Hidden Glowing Sphere (Positioned behind the wall)
+        const sphereGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x00ffff, 
+            emissive: 0x006699,
+            roughness: 0.2,
+            metalness: 0.5
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(0, -1, -6); 
+        scene.add(sphere);
+
+
+// --- 4. PLANAR GLASS REFLECTOR (Semi-Transparent with Tint) ---
+const glassGeometry = new THREE.PlaneGeometry(10, 10);
+
+const glassReflector = new THREE.Reflector(glassGeometry, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio,
+    textureHeight: window.innerHeight * window.devicePixelRatio,
+    color: 0x333333 // Reflection intensity
+});
+
+// Position & orientation
+glassReflector.position.set(0, 5, -5);
+glassReflector.rotation.x = Math.PI / 4;
+
+// Enable material transparency
+glassReflector.material.transparent = true;
+
+// Patch shader to inject a base glass tint (e.g., slight bluish-gray) and control opacity
+glassReflector.material.fragmentShader = glassReflector.material.fragmentShader.replace(
+    'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
+    `
+        vec3 reflectionColor = blendOverlay( base.rgb, color );
+        vec3 glassTint = vec3(0.05, 0.1, 0.15); // Adjust RGB values (0.0 to 1.0) for tint color
+        
+        // Blend reflection with base glass tint
+        gl_FragColor = vec4( reflectionColor + glassTint, 0.45 );
+    `
+);
+
+scene.add(glassReflector);        
+
+/*
+
+        // --- 4. PLANAR GLASS REFLECTOR (Semi-Transparent & Dimmed) ---
+const glassGeometry = new THREE.PlaneGeometry(10, 10);
+
+const glassReflector = new THREE.Reflector(glassGeometry, {
+    clipBias: 0.003,
+    textureWidth: window.innerWidth * window.devicePixelRatio,
+    textureHeight: window.innerHeight * window.devicePixelRatio,
+    // 1. Lower this color tint to dim the reflection intensity
+    color: 0xffffff 
+//    color: 0x333333 
+});
+
+// Position & orientation
+glassReflector.position.set(0, 5, -5);
+glassReflector.rotation.x = Math.PI / 4;
+
+// 2. Enable material transparency
+glassReflector.material.transparent = true;
+
+// 3. Patch the internal GLSL shader to allow actual opacity/alpha blending
+glassReflector.material.fragmentShader = glassReflector.material.fragmentShader.replace(
+    'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
+    'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 0.4 );' // Adjust 0.35 to change glass opacity
+);
+
+scene.add(glassReflector);
+*/
+
+/*
+        // 4. PLANAR GLASS REFLECTOR (Accurate Flat Mirror)
+        const glassGeometry = new THREE.PlaneGeometry(10, 10);
+        
+        const glassReflector = new THREE.Reflector(glassGeometry, {
+            clipBias: 0.003,
+            textureWidth: window.innerWidth * window.devicePixelRatio,
+            textureHeight: window.innerHeight * window.devicePixelRatio,
+            color: 0x888888 // Controls brightness/opacity of the reflection
+        });
+
+        // Position and rotate the glass plate at 45 degrees
+        glassReflector.position.set(0, 5, -5);
+        glassReflector.rotation.x = Math.PI / 4;
+        
+        // Enable transparency so the background grid shows through the glass
+        glassReflector.material.transparent = true;
+        glassReflector.material.opacity = 0.2; // Adjust transparency (0.0 = fully transparent, 1.0 = solid mirror)
+
+        scene.add(glassReflector);
+*/
+        // --- ANIMATION LOOP ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Slightly animate sphere behind the wall
+            sphere.position.y = -1 + Math.sin(elapsedTime * 2) * 0.3;
+            ghostLight.position.y = sphere.position.y;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- RESIZE HANDLER ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Resize reflector render target texture
+            glassReflector.getRenderTarget().setSize(
+                window.innerWidth * window.devicePixelRatio,
+                window.innerHeight * window.devicePixelRatio
+            );
+        });
+
+        // Start simulation
+        animate();
+    </script>
+</body>
+</html>
