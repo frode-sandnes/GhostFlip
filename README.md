@@ -1,4 +1,4 @@
-#GhostFlip
+# GhostFlip
 This is the compendiumm material for the Ghost Flip Demo described in:
 
 Frode Eika Sandnes, GhostFlip 👻: Playing with Pseudo-Holographic 3D Visualizations on Foldable Smartphones, In adjunct proceedings of NordiCHI 2026. 2026.  
