@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Grid Viewport</title>
+    <style>
+        /* Remove default margins and prevent scrolling */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        /* Container to split the screen in half vertically */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Base style for both grid sections */
+        .grid-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            flex: 1; /* Each takes 50% height */
+            width: 100%;
+        }
+
+        /* Upper Grid: Red borders */
+        .upper-grid {
+            border-bottom: 2px solid red; /* Visual separator */
+        }
+        .upper-grid div {
+            border: 1px solid red;
+        }
+
+        /* Lower Grid: White cells */
+        .lower-grid div {
+            border: 1px solid #333; /* Dark border for visibility against black */
+        }
+
+        /* Specific Cell Coloring */
+        .gray-fill {
+            background-color: #808080; /* 50% Gray */
+        }
+
+        .white-fill {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="grid-section upper-grid" id="upperGrid">
+            <div></div><div></div><div></div><div></div>
+            <div class="gray-fill"></div>
+            <div></div><div></div><div></div><div></div>
+        </div>
+
+        <div class="grid-section lower-grid" id="lowerGrid">
+            <div class="white-fill"></div><div></div><div  class="white-fill"></div>
+            <div></div><div></div><div></div>
+            <div class="white-fill"></div><div></div><div class="white-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript can be used to dynamically adjust or interact with cells
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("Grid App Initialized");
+            
+            // Example: Logging dimensions to ensure it fills viewport
+            const upper = document.getElementById('upperGrid');
+            console.log(`Upper Grid Height: ${upper.offsetHeight}px`);
+        });
+    </script>
+</body>
+</html>

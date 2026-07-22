@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Grid App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden; /* Prevent scrolling */
+            font-family: sans-serif;
+        }
+
+        /* Landing Page */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            color: white;
+            background: transparent;
+            border: 2px solid white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Main Layout */
+        #main-page {
+            display: none; /* Hidden until button click */
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1; /* Splits height 50/50 */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Upper: Red Disk */
+        #upper-section {
+            border-bottom: 1px solid #333; /* Visual divider */
+        }
+
+        .red-disk {
+            width: 20vw; /* 20% of viewport width */
+            aspect-ratio: 1 / 1.3; /* Keep it a perfect circle */
+            background-color: red;
+            border-radius: 50%;
+        }
+
+        /* Lower: 5x5 Grid */
+        #lower-section {
+            padding: 10px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: 80vmin; /* Responsive sizing based on available space */
+            height: 80vmin;
+            border: 5px solid white; /* Outer border */
+        }
+
+        .grid-item {
+            border: 2.5px solid white; /* Resulting in a 5px total line width between cells */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">START</button>
+    </div>
+
+    <div id="main-page">
+        <div id="upper-section" class="section">
+            <div class="red-disk"></div>
+        </div>
+        <div id="lower-section" class="section">
+            <div class="grid-container">
+                <div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div>
+                <div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div>
+                <div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div>
+                <div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div>
+                <div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div><div class="grid-item"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+
+        startBtn.addEventListener('click', function() {
+            // Enable NoSleep
+            noSleep.enable();
+
+            // Transition UI
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('main-page').style.display = 'flex';
+
+            // Optional: Enter Fullscreen for better experience
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+
+</body>
+</html>

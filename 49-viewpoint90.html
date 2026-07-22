@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sirkel Offset App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none; /* Hindrer zooming og scrolling under interaksjon */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: monospace;
+        }
+
+        /* Startskjerm */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            z-index: 100;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 25px 60px;
+            font-size: 1.8rem;
+            color: white;
+            background: transparent;
+            border: 4px solid white;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        /* App Layout */
+        #main-page {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Øvre del */
+        #upper-section {
+            border-bottom: 1px solid #333;
+        }
+
+        /* Rød sirkel (10px bredde, fast) */
+        .circle-fixed {
+            width: 20vw; /* Radius 10% = Diameter 20% */
+            height: 20vw;
+            border: 10px solid red;
+            border-radius: 50%;
+            background: transparent;
+            position: absolute;
+        }
+
+        #offset-text {
+            position: absolute;
+            top: 15%;
+            color: white;
+            font-size: 3.5rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Nedre del */
+        #lower-section {
+            background-color: black;
+        }
+
+        /* Hvit vertikal linje til høyre */
+        .right-border {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background-color: white;
+        }
+
+        /* Hvit disk (bevegelig) */
+        #movable-disk {
+            width: 20vw;
+            height: 20vw;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none; /* Lar klikk gå igjennom til bakgrunnen */
+            transition: transform 0.05s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">START</button>
+    </div>
+
+    <div id="main-page">
+        <div id="upper-section" class="section">
+            <div id="offset-text">X: 0, Y: 0</div>
+            <div class="circle-fixed"></div>
+        </div>
+        
+        <div id="lower-section" class="section">
+            <div class="right-border"></div>
+            <div id="movable-disk"></div>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+        const landingPage = document.getElementById('landing-page');
+        const mainPage = document.getElementById('main-page');
+        const lowerSection = document.getElementById('lower-section');
+        const movableDisk = document.getElementById('movable-disk');
+        const offsetText = document.getElementById('offset-text');
+
+        let centerX, centerY;
+
+        startBtn.addEventListener('click', () => {
+            noSleep.enable();
+            landingPage.style.display = 'none';
+            mainPage.style.display = 'flex';
+            
+            // Beregn senterpunktet for den nedre delen
+            updateCenterCoordinates();
+
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+
+        function updateCenterCoordinates() {
+            const rect = lowerSection.getBoundingClientRect();
+            centerX = rect.left + rect.width / 2;
+            centerY = rect.top + rect.height / 2;
+        }
+
+        function handleInteraction(e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            // Beregn avstand fra senter
+            const dx = Math.round(clientX - centerX);
+            const dy = Math.round(clientY - centerY);
+
+            // Flytt disken
+            movableDisk.style.transform = `translate(${dx}px, ${dy}px)`;
+            
+            // Oppdater tekst i øvre vindu
+            offsetText.textContent = `X: ${dx}, Y: ${dy}`;
+        }
+
+        // Event listeners for både mus og touch
+        lowerSection.addEventListener('mousedown', handleInteraction);
+        lowerSection.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            handleInteraction(e);
+        });
+
+        // Oppdater koordinater ved skjermrotasjon eller resize
+        window.addEventListener('resize', updateCenterCoordinates);
+    </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Color Wheel Gradients</title>
+    <style>
+        /* Full-screen reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Equal halves of the viewport */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        /* Upper Section: Vertical Bars */
+        .upper {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .v-bar {
+            height: 100%;
+            /* 6 bars + 5 gaps = 11 units */
+            width: calc(100vw / 11);
+        }
+
+        /* Lower Section: Horizontal Bars */
+        .lower {
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .h-bar {
+            width: 100%;
+            /* 6 bars + 5 gaps = 11 units */
+            height: calc(50vh / 11);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="upper-section"></div>
+    <div class="section lower" id="lower-section"></div>
+
+    <script>
+        const upper = document.getElementById('upper-section');
+        const lower = document.getElementById('lower-section');
+        
+        // 6 hues equally spaced around the 360 degree wheel
+        const hues = [0, 60, 120, 180, 240, 300];
+        const chroma = 0.15; // Consistent color intensity
+
+        hues.forEach(h => {
+            // Create Vertical Bars (Top)
+            const vBar = document.createElement('div');
+            vBar.className = 'v-bar';
+            // Gradient from 0% lightness to 100% lightness (Vertical)
+            vBar.style.background = `linear-gradient(to top, oklch(0% ${chroma} ${h}), oklch(50% ${chroma} ${h}))`;
+            upper.appendChild(vBar);
+
+            // Create Horizontal Bars (Bottom)
+            const hBar = document.createElement('div');
+            hBar.className = 'h-bar';
+            // Gradient from 0% lightness to 100% lightness (Horizontal)
+            hBar.style.background = `linear-gradient(to right, oklch(0% ${chroma} ${h}), oklch(100% ${chroma} ${h}))`;
+            lower.appendChild(hBar);
+        });
+    </script>
+</body>
+</html>

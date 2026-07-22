@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Gradient Bars</title>
+    <style>
+        /* Reset and full-screen setup */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Divide screen into two equal halves */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Upper Section: Vertical bars side-by-side */
+        .upper {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .v-bar {
+            height: 100%;
+            /* 5 bars + 4 gaps = 9 units. Each bar is 1/9th of the width */
+            width: calc(100vw / 9);
+            /* Gradient goes from bottom (0%) to top (100%) */
+            background: linear-gradient(to top, oklch(0% 0 0), oklch(100% 0 0));
+        }
+
+        /* Lower Section: Horizontal bars stacked */
+        .lower {
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .h-bar {
+            width: 100%;
+            /* 5 bars + 4 gaps = 9 units. Each bar is 1/9th of the height */
+            height: calc(50vh / 9);
+            /* Gradient goes from left (0%) to right (100%) */
+            background: linear-gradient(to right, oklch(0% 0 0), oklch(100% 0 0));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="upper-container"></div>
+
+    <div class="section lower" id="lower-container"></div>
+
+    <script>
+        const upper = document.getElementById('upper-container');
+        const lower = document.getElementById('lower-container');
+
+        // Generate 5 bars for each section
+        for (let i = 0; i < 5; i++) {
+            // Create Vertical Bar
+            const vBar = document.createElement('div');
+            vBar.className = 'v-bar';
+            upper.appendChild(vBar);
+
+            // Create Horizontal Bar
+            const hBar = document.createElement('div');
+            hBar.className = 'h-bar';
+            lower.appendChild(hBar);
+        }
+    </script>
+</body>
+</html>

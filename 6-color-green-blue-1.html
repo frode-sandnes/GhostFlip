@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Gradient Calibration App</title>
+    <style>
+        /* Basic reset to ensure full-screen coverage */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Divide screen into two equal halves */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        /* Top: Vertical Green Bars */
+        .upper {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .green-bar {
+            height: 100%;
+            /* 5 bars + 4 gaps = 9 total units */
+            width: calc(100vw / 9);
+            /* Gradient: Bottom(0% Lightness) to Top(100% Lightness) */
+            background: linear-gradient(to top, oklch(0% 0.2 140), oklch(50% 0.2 140));
+        }
+
+        /* Bottom: Horizontal Blue Bars */
+        .lower {
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .blue-bar {
+            width: 100%;
+            /* 5 bars + 4 gaps = 9 total units */
+            height: calc(50vh / 9);
+            /* Gradient: Left(0% Lightness) to Right(100% Lightness) */
+            background: linear-gradient(to right, oklch(0% 0.2 250), oklch(100% 0.2 250));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="green-section"></div>
+
+    <div class="section lower" id="blue-section"></div>
+
+    <script>
+        const greenSection = document.getElementById('green-section');
+        const blueSection = document.getElementById('blue-section');
+
+        // Create 5 bars for each section
+        for (let i = 0; i < 5; i++) {
+            // Upper green bars
+            const gBar = document.createElement('div');
+            gBar.className = 'green-bar';
+            greenSection.appendChild(gBar);
+
+            // Lower blue bars
+            const bBar = document.createElement('div');
+            bBar.className = 'blue-bar';
+            blueSection.appendChild(bBar);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split-Depth Particle Sphere</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section {
+            width: 100vw;
+            height: 50vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Mirror the lower section (Far end) across the horizontal axis */
+        .lower {
+            transform: scaleY(-1);
+            border-top: 1px solid #222;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper">
+        <canvas id="canvas-near"></canvas>
+    </div>
+    <div class="section lower">
+        <canvas id="canvas-far"></canvas>
+    </div>
+
+    <script>
+        const canvasNear = document.getElementById('canvas-near');
+        const canvasFar = document.getElementById('canvas-far');
+        const ctxNear = canvasNear.getContext('2d');
+        const ctxFar = canvasFar.getContext('2d');
+
+        let width, height, radius;
+        const particleCount = 180;
+        const particles = [];
+
+        class Particle {
+            constructor() {
+                // Initialize random position on a unit sphere
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                
+                this.x = Math.sin(phi) * Math.cos(theta);
+                this.y = Math.sin(phi) * Math.sin(theta);
+                this.z = Math.cos(phi);
+
+                // Assign a unique random rotation axis (unit vector)
+                const ax = Math.random() * 2 - 1;
+                const ay = Math.random() * 2 - 1;
+                const az = Math.random() * 2 - 1;
+                const mag = Math.sqrt(ax*ax + ay*ay + az*az);
+                this.axis = { x: ax/mag, y: ay/mag, z: az/mag };
+
+                this.rotationSpeed = (Math.random() * 0.015) + 0.005;
+                this.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+            }
+
+            update() {
+                // Rodrigues' rotation formula to rotate point around unique axis
+                const cosA = Math.cos(this.rotationSpeed);
+                const sinA = Math.sin(this.rotationSpeed);
+                
+                const crossX = this.axis.y * this.z - this.axis.z * this.y;
+                const crossY = this.axis.z * this.x - this.axis.x * this.z;
+                const crossZ = this.axis.x * this.y - this.axis.y * this.x;
+
+                const dot = this.axis.x * this.x + this.axis.y * this.y + this.axis.z * this.z;
+
+                this.x = this.x * cosA + crossX * sinA + this.axis.x * dot * (1 - cosA);
+                this.y = this.y * cosA + crossY * sinA + this.axis.y * dot * (1 - cosA);
+                this.z = this.z * cosA + crossZ * sinA + this.axis.z * dot * (1 - cosA);
+            }
+
+            draw(ctx) {
+                const screenX = this.x * radius + width / 2;
+                const screenY = this.y * radius + height / 2;
+                
+                ctx.beginPath();
+                ctx.fillStyle = this.color;
+                // Subtle size modulation based on depth
+                const size = (this.z + 1.5) * 1.5;
+                ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight / 2;
+            radius = Math.min(width, height) * 0.45;
+            
+            canvasNear.width = width;
+            canvasNear.height = height;
+            canvasFar.width = width;
+            canvasFar.height = height;
+        }
+
+        function animate() {
+            // Semi-transparent overlay creates the trail effect
+            ctxNear.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctxNear.fillRect(0, 0, width, height);
+            
+            ctxFar.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctxFar.fillRect(0, 0, width, height);
+
+            particles.forEach(p => {
+                p.update();
+                // Logic Split: Near (z >= 0) to top canvas, Far (z < 0) to bottom canvas
+                if (p.z >= 0) {
+                    p.draw(ctxNear);
+                } else {
+                    p.draw(ctxFar);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full-Width Dual Grid</title>
+    <style>
+        /* Remove all default margins and hide scrollbars */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Each section takes exactly 50% of the viewport height */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            box-sizing: border-box;
+        }
+
+        /* Grid lines using borders */
+        .cell {
+            border: 4px solid;
+            box-sizing: border-box; /* Ensures borders don't add to the width */
+        }
+
+        /* Red grid for the top */
+        .upper .cell {
+            border-color:#880000;
+        }
+
+        /* Green grid for the bottom */
+        .lower .cell {
+            border-color: #88ff88;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="upper-grid"></div>
+
+    <div class="section lower" id="lower-grid"></div>
+
+    <script>
+        /**
+         * Dynamically populates the sections with 25 cells each
+         */
+        function populateGrid(containerId) {
+            const container = document.getElementById(containerId);
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                container.appendChild(cell);
+            }
+        }
+
+        // Initialize both grids
+        populateGrid('upper-grid');
+        populateGrid('lower-grid');
+    </script>
+</body>
+</html>

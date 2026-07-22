@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inverted Parallax City</title>
+    <style>
+        /* Full-screen reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section {
+            width: 100vw;
+            height: 50vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Mirror the lower section across the horizontal axis */
+        .lower {
+            transform: scaleY(-1);
+            border-top: 1px solid #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper">
+        <canvas id="canvas-upper"></canvas>
+    </div>
+
+    <div class="section lower">
+        <canvas id="canvas-lower"></canvas>
+    </div>
+
+    <script>
+        const canvasUpper = document.getElementById('canvas-upper');
+        const canvasLower = document.getElementById('canvas-lower');
+        const ctxUpper = canvasUpper.getContext('2d');
+        const ctxLower = canvasLower.getContext('2d');
+
+        let width, height;
+
+        // Configuration for the 3 parallax layers
+        const layers = [
+            { speed: 0.5, color: '#888888', buildings: [] }, // Back (Slowest/Darkest)
+            { speed: 1.5, color: '#ffffff', buildings: [] }, // Mid (Medium)
+            { speed: 4.0, color: '#444444', buildings: [] }  // Front (Fastest/Brightest)
+        ];
+
+        function generateLayer(layer) {
+            layer.buildings = [];
+            let currentX = 0;
+            // Generate enough content to fill screen + buffer for looping
+            while (currentX < width + 800) {
+                const bWidth = Math.random() * 80 + 40;
+                const bHeight = Math.random() * (height * 0.7) + 30;
+                layer.buildings.push({ x: currentX, w: bWidth, h: bHeight });
+                currentX += bWidth + (Math.random() * 15);
+            }
+            layer.totalWidth = currentX;
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight / 2;
+            
+            canvasUpper.width = width;
+            canvasUpper.height = height;
+            canvasLower.width = width;
+            canvasLower.height = height;
+
+            layers.forEach(generateLayer);
+        }
+
+        function drawLayer(ctx, layer, scrollOffset) {
+            ctx.fillStyle = layer.color;
+            layer.buildings.forEach(b => {
+                // Wrap-around scrolling logic
+                let xPos = (b.x - scrollOffset) % layer.totalWidth;
+                if (xPos < -b.w) xPos += layer.totalWidth;
+                
+                // Only draw if within visible screen width
+                if (xPos < width) {
+                    ctx.fillRect(xPos, height - b.h, b.w, b.h);
+                }
+            });
+        }
+
+        let offset = 0;
+
+        function animate() {
+            offset += 1;
+
+            ctxUpper.clearRect(0, 0, width, height);
+            ctxLower.clearRect(0, 0, width, height);
+
+            // Upper Part: Display front layer (Fast/Bright)
+            drawLayer(ctxUpper, layers[2], offset * layers[2].speed);
+
+            // Lower Part: Display back and mid layers (Slow/Dark)
+            // Note: CSS scaleY handles the mirroring
+            drawLayer(ctxLower, layers[0], offset * layers[0].speed);
+            drawLayer(ctxLower, layers[1], offset * layers[1].speed);
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+    </script>
+</body>
+</html>

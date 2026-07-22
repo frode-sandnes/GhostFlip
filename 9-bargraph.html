@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fully Mirrored Bar Charts</title>
+    <style>
+        /* Full-screen setup */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: sans-serif;
+        }
+
+        /* Divide screen into two equal halves */
+        .chart-container {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+        }
+
+        /* Mirror the entire bottom container across the horizontal axis */
+        .bottom {
+            transform: scaleY(-1);
+        }
+
+        /* Note: We no longer include the .bottom text scaleY correction.
+           This ensures text is upside-down as requested.
+        */
+    </style>
+</head>
+<body>
+
+    <div class="chart-container upper" id="upper-section">
+        <svg id="svg-upper" viewBox="0 0 400 200"></svg>
+    </div>
+
+    <div class="chart-container bottom" id="lower-section">
+        <svg id="svg-lower" viewBox="0 0 400 200"></svg>
+    </div>
+
+    <script>
+        function drawChart(svgId, color, data) {
+            const svg = document.getElementById(svgId);
+            const margin = { top: 40, right: 20, bottom: 30, left: 40 };
+            const width = 400;
+            const height = 200;
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+
+            // Clear existing SVG content
+            svg.innerHTML = '';
+
+            // Draw Axes
+            const axisPath = `
+                <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="${color}" stroke-width="2" />
+                <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="${color}" stroke-width="2" />
+            `;
+            svg.innerHTML += axisPath;
+
+            const barWidth = chartWidth / data.length - 20;
+            const maxVal = Math.max(...data);
+
+            data.forEach((val, i) => {
+                const bHeight = (val / maxVal) * chartHeight;
+                const x = margin.left + i * (chartWidth / data.length) + 10;
+                const y = height - margin.bottom - bHeight;
+
+                // Create Bar
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", x);
+                rect.setAttribute("y", y);
+                rect.setAttribute("width", barWidth);
+                rect.setAttribute("height", bHeight);
+                rect.setAttribute("fill", color);
+                svg.appendChild(rect);
+
+                // Create Value Label (Will be upside down in the bottom section)
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", x + barWidth / 2);
+                text.setAttribute("y", y - 10);
+                text.setAttribute("fill", color);
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("font-size", "14");
+                text.textContent = val;
+                svg.appendChild(text);
+            });
+        }
+
+        // Generate arbitrary random numbers
+        const dataUpper = [Math.floor(Math.random()*80)+20, Math.floor(Math.random()*80)+20, Math.floor(Math.random()*80)+20];
+        const dataLower = [Math.floor(Math.random()*80)+20, Math.floor(Math.random()*80)+20, Math.floor(Math.random()*80)+20];
+
+        // Draw the charts
+        drawChart('svg-upper', 'yellow', dataUpper);
+        drawChart('svg-lower', 'white', dataLower);
+    </script>
+</body>
+</html>

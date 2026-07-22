@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual-Layer Urban Parallax</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            touch-action: none; /* Prevents browser scrolling/zooming */
+        }
+
+        .section {
+            width: 100vw;
+            height: 50vh;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #1a1a1a;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Mirror the upper section (Street Level) */
+        .upper {
+            transform: scaleY(-1);
+        }
+
+        .label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: monospace;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper">
+        <div class="label">SURFACE MAP [MIRRORED]</div>
+        <canvas id="canvas-street"></canvas>
+    </div>
+
+    <div class="section lower">
+        <div class="label">SUBSURFACE TUNNELS</div>
+        <canvas id="canvas-tunnel"></canvas>
+    </div>
+
+    <script>
+        const canvasS = document.getElementById('canvas-street');
+        const canvasT = document.getElementById('canvas-tunnel');
+        const ctxS = canvasS.getContext('2d');
+        const ctxT = canvasT.getContext('2d');
+
+        let width, height;
+        let isDragging = false;
+        let lastX, lastY;
+
+        // Map Position State
+        let mapX = 0;
+        let mapY = 0;
+        const tunnelRatio = 0.5; // Tunnels move half as fast for depth effect
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight / 2;
+            canvasS.width = width;
+            canvasS.height = height;
+            canvasT.width = width;
+            canvasT.height = height;
+            draw();
+        }
+
+        // Procedural drawing of a city grid/tunnel system
+        function drawGrid(ctx, x, y, color, size, isTunnel) {
+            ctx.clearRect(0, 0, width, height);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isTunnel ? 4 : 1;
+
+            const startX = x % size;
+            const startY = y % size;
+
+            for (let i = startX - size; i < width + size; i += size) {
+                for (let j = startY - size; j < height + size; j += size) {
+                    if (isTunnel) {
+                        // Drawing "Organic" tunnel junctions
+                        ctx.beginPath();
+                        ctx.arc(i + size/2, j + size/2, 8, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.strokeRect(i + 20, j + 20, size - 40, size - 40);
+                    } else {
+                        // Drawing City Blocks
+                        ctx.strokeRect(i + 5, j + 5, size - 10, size - 10);
+                        // Add some building "internal" detail
+                        ctx.strokeRect(i + 20, j + 20, size - 40, size - 40);
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            // Upper: Street level moves 1:1
+            drawGrid(ctxS, mapX, mapY, "#00ffcc", 100, false);
+            // Lower: Tunnels move at the parallax ratio
+            drawGrid(ctxT, mapX * tunnelRatio, mapY * tunnelRatio, "#ff4400", 150, true);
+        }
+
+        function onStart(e) {
+            isDragging = true;
+            const pos = e.touches ? e.touches[0] : e;
+            lastX = pos.clientX;
+            lastY = pos.clientY;
+        }
+
+        function onMove(e) {
+            if (!isDragging) return;
+            const pos = e.touches ? e.touches[0] : e;
+            const dx = pos.clientX - lastX;
+            const dy = pos.clientY - lastY;
+
+            mapX += dx;
+            mapY += dy;
+
+            lastX = pos.clientX;
+            lastY = pos.clientY;
+            draw();
+        }
+
+        function onEnd() {
+            isDragging = false;
+        }
+
+        // Listeners
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchstart', onStart);
+        window.addEventListener('touchmove', onMove);
+        window.addEventListener('touchend', onEnd);
+
+        resize();
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCH Color Calibration</title>
+    <style>
+        /* Base Reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* Splash Screen */
+        #splash {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            z-index: 10;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Main Page Layout */
+        #main-page {
+            display: none; /* Hidden until start clicked */
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            display: flex;
+            height: 50vh;
+            width: 100%;
+        }
+
+        .upper {
+            flex-direction: row; /* Vertical bars */
+        }
+
+        .lower {
+            flex-direction: column; /* Horizontal bars */
+        }
+
+        .bar {
+            flex: 1;
+        }
+
+        /* OKLCH Color Definitions: oklch(L C H) */
+        /* Upper Part: Lightness 0.4 (40%) */
+        .u1 { background-color: oklch(0.4 0 0); }      /* White (Gray at 40%) */
+        .u2 { background-color: oklch(0.4 0.15 100); } /* Yellow */
+        .u3 { background-color: oklch(0.4 0.15 200); } /* Cyan */
+        .u4 { background-color: oklch(0.4 0.15 140); } /* Green */
+        .u5 { background-color: oklch(0.4 0.15 330); } /* Magenta */
+        .u6 { background-color: oklch(0.4 0.15 29); }  /* Red */
+        .u7 { background-color: oklch(0.4 0.15 260); } /* Blue */
+
+        /* Lower Part: Lightness 1.0 (100%) */
+        /* L=1.0 is pure white across all hues */
+        .l1 { background-color: oklch(1.0 0 0); }
+        .l2 { background-color: oklch(1.0 0.15 100); }
+        .l3 { background-color: oklch(1.0 0.15 200); }
+        .l4 { background-color: oklch(1.0 0.15 140); }
+        .l5 { background-color: oklch(1.0 0.15 330); }
+    </style>
+</head>
+<body>
+
+    <div id="splash">
+        <button id="start-btn">START APP</button>
+    </div>
+
+    <div id="main-page">
+        <div class="section upper">
+            <div class="bar u1"></div>
+            <div class="bar u2"></div>
+            <div class="bar u3"></div>
+            <div class="bar u4"></div>
+            <div class="bar u5"></div>
+            <div class="bar u6"></div>
+            <div class="bar u7"></div>
+        </div>
+
+        <div class="section lower">
+            <div class="bar l1"></div>
+            <div class="bar l2"></div>
+            <div class="bar l3"></div>
+            <div class="bar l4"></div>
+            <div class="bar l5"></div>
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const splash = document.getElementById('splash');
+        const mainPage = document.getElementById('main-page');
+        let wakeLock = null;
+
+        // Function to activate Screen Wake Lock
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock is active');
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            }
+        }
+
+        // Handle Start Click
+        startBtn.addEventListener('click', () => {
+            splash.style.display = 'none';
+            mainPage.style.display = 'flex';
+            
+            // Request Wake Lock upon user gesture
+            requestWakeLock();
+        });
+
+        // Re-request wake lock if tab is hidden and then shown again
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+    </script>
+</body>
+</html>

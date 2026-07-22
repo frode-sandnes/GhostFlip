@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Grid App - Muted</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        /* Startskjerm */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            color: white;
+            background: transparent;
+            border: 2px solid white;
+            cursor: pointer;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Hovedlayout */
+        #main-page {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1; /* Deler skjermen nøyaktig 50/50 */
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Øvre del: YouTube */
+        #upper-section iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Nedre del: 7x7 Grid */
+        #lower-section {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            /* Ramme rundt hele rutenettet */
+            border: 5px solid red; 
+        }
+
+        .grid-cell {
+            /* 5px på hver celle skaper 10px brede linjer mellom cellene */
+            border: 5px solid red;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">Start</button>
+    </div>
+
+    <div id="main-page">
+        <div id="upper-section" class="section">
+            <iframe id="ghost-video" 
+                src="" 
+                title="GHOST WOMAN" 
+                frameborder="0" 
+                allow="autoplay; encrypted-media" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        
+        <div id="lower-section" class="section">
+            <script>
+                const gridContainer = document.getElementById('lower-section');
+                for (let i = 0; i < 49; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    gridContainer.appendChild(cell);
+                }
+            </script>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+        const video = document.getElementById('ghost-video');
+
+        startBtn.addEventListener('click', function() {
+            // Aktiver NoSleep
+            noSleep.enable();
+
+            // Bytt visning
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('main-page').style.display = 'flex';
+
+            /**
+             * YouTube Parametere:
+             * autoplay=1 : Starter automatisk
+             * loop=1 & playlist=... : Nødvendig for at videoen skal gå i loop
+             * mute=1 : Spiller av uten lyd (viktig for at autoplay skal fungere i de fleste nettlesere)
+             */
+            const videoId = "xA3-SKC2WFk";
+            video.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&mute=1`;
+
+            // Gå til fullskjerm hvis mulig
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Lightness Intensity Bars</title>
+    <style>
+        /* Full-screen black background with no scroll */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container for each half of the screen */
+        .half-screen {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        /* Upper part: Vertical bars (side by side) */
+        .upper {
+            flex-direction: row;
+        }
+
+        .vertical-bar {
+            height: 100%;
+            flex: 1; /* Ensures equal width */
+        }
+
+        /* Lower part: Horizontal bars (stacked) */
+        .lower {
+            flex-direction: column;
+        }
+
+        .horizontal-bar {
+            width: 100%;
+            flex: 1; /* Ensures equal height */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="half-screen upper" id="upper-section"></div>
+
+    <div class="half-screen lower" id="lower-section"></div>
+
+    <script>
+        // HCL Lightness steps (0% to 100%)
+        const lightnessSteps = [0, 25, 50, 75, 100];
+
+        const upperSection = document.getElementById('upper-section');
+        const lowerSection = document.getElementById('lower-section');
+
+        lightnessSteps.forEach((l) => {
+            // Create vertical bars for the top
+            const vBar = document.createElement('div');
+            vBar.className = 'vertical-bar';
+            // Using oklch: oklch(Lightness Chroma Hue)
+            vBar.style.backgroundColor = `oklch(${l}% 0 0)`;
+            upperSection.appendChild(vBar);
+
+            // Create horizontal bars for the bottom
+            const hBar = document.createElement('div');
+            hBar.className = 'horizontal-bar';
+            hBar.style.backgroundColor = `oklch(${l}% 0 0)`;
+            lowerSection.appendChild(hBar);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Split View</title>
+    <style>
+        /* Base Styling and Viewport Lock */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        /* Splash Screen */
+        #splash {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            z-index: 100;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 18px 45px;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            background: transparent;
+            color: white;
+            border: 1px solid #ffffffaa;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Main Content Layout */
+        #main-page {
+            display: none; /* Activated via JS */
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            display: flex;
+            flex: 1; /* Exactly 50% height */
+            width: 100%;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Upper Part: Small Moon */
+        .moon {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #f0f0f0, #a0a0a0 60%, #333);
+            border-radius: 50%;
+            margin-right: 25%; /* Slightly offset to the left of center */
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Lower Part: Large, Very Bright Earth */
+        .earth {
+            /* Nearly covers the lower part (approx 90% of 50vh) */
+            height: 85vh; 
+            max-height: 45vh; 
+            aspect-ratio: 1 / 1;
+            
+            background: radial-gradient(circle at 35% 35%, 
+                #b0f0ff 0%, 
+                #1e90ff 35%, 
+                #0047ab 75%, 
+                #000c1a 100%);
+            border-radius: 50%;
+
+            /* Multi-layer bloom effect for extreme brightness */
+            box-shadow: 
+                0 0 40px #1e90ff, 
+                0 0 80px rgba(30, 144, 255, 0.6),
+                inset -25px -25px 50px rgba(0,0,0,0.9);
+            position: relative;
+        }
+
+        /* Subtle atmospheric highlight */
+        .earth::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.45) 0%, transparent 55%);
+            filter: blur(4px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splash">
+        <button id="start-btn">BEGIN EXPLORATION</button>
+    </div>
+
+    <div id="main-page">
+        <div class="section">
+            <div class="moon"></div>
+        </div>
+        <div class="section">
+            <div class="earth"></div>
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const splash = document.getElementById('splash');
+        const mainPage = document.getElementById('main-page');
+
+        startBtn.addEventListener('click', () => {
+            // Hide splash and show main page
+            splash.style.display = 'none';
+            mainPage.style.display = 'flex';
+
+            // Optional: Auto-request Fullscreen for immersion
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

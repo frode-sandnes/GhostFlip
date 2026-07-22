@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Full Screen Grid App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        /* Remove default browser spacing */
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden; /* Prevent scrolling/overscroll */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Main Viewport Container */
+        .viewport {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Upper Part: Solid Black */
+        .upper-part {
+            flex: 1; /* Occupies 50% height */
+            width: 100%;
+            background-color: black;
+        }
+
+        /* Lower Part: Grid with 5 lines */
+        .lower-part {
+            flex: 1; /* Occupies 50% height */
+            width: 100%;
+            display: flex;
+            justify-content: space-evenly; /* Equal spacing between lines */
+            align-items: stretch;
+            background-color: black;
+        }
+
+        /* Vertical Lines */
+        .line {
+            width: 20px;
+            background-color: white;
+            height: 100%;
+        }
+
+        /* Interaction Overlay (Required for WakeLock and Fullscreen) */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #startBtn {
+            padding: 20px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+
+        #startBtn:hover {
+            background: white;
+            color: black;
+        }
+
+        .instruction {
+            color: #666;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <button id="startBtn">Enter Fullscreen & Prevent Sleep</button>
+        <div class="instruction">Tap button to initialize app</div>
+    </div>
+
+    <div class="viewport">
+        <div class="upper-part"></div>
+
+        <div class="lower-part">
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+            <div class="line"></div>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('startBtn');
+        const overlay = document.getElementById('overlay');
+
+        startBtn.addEventListener('click', function() {
+            // 1. Activate NoSleep (Prevents screen dimming)
+            noSleep.enable();
+
+            // 2. Request Fullscreen
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen();
+            } else if (docEl.webkitRequestFullscreen) { /* Safari support */
+                docEl.webkitRequestFullscreen();
+            } else if (docEl.msRequestFullscreen) { /* IE11 support */
+                docEl.msRequestFullscreen();
+            }
+
+            // 3. Remove Overlay
+            overlay.style.display = 'none';
+        }, false);
+
+        // Reset display if user exits fullscreen
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                overlay.style.display = 'flex';
+                noSleep.disable();
+            }
+        });
+    </script>
+</body>
+</html>

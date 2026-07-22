@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromatic Grid Split</title>
+    <style>
+        /* Full-screen setup with black background */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Equal division of the viewport */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            position: relative;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        /* Upper section: Vertical bars */
+        .upper {
+            flex-direction: row;
+        }
+
+        /* Lower section: Horizontal bars */
+        .lower {
+            flex-direction: column;
+        }
+
+        .bar {
+            flex: 1; /* Ensures bars and spaces have equal width/height */
+        }
+
+        .spacer {
+            flex: 1;
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="upper-section"></div>
+
+    <div class="section lower" id="lower-section"></div>
+
+    <script>
+        const colors = ['white', 'yellow', 'cyan', 'green', 'magenta', 'red', 'blue'];
+        const upperContainer = document.getElementById('upper-section');
+        const lowerContainer = document.getElementById('lower-section');
+
+        // Generate Upper Section: Vertical Bars + Spaces
+        // Total of 7 colors + 6 spacers = 13 total segments
+        colors.forEach((color, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.backgroundColor = color;
+            upperContainer.appendChild(bar);
+
+            // Add spacer if it's not the last color
+            if (index < colors.length - 1) {
+                const spacer = document.createElement('div');
+                spacer.className = 'spacer';
+                upperContainer.appendChild(spacer);
+            }
+        });
+
+        // Generate Lower Section: 6 Horizontal Bars + 5 Spaces
+        // We use the first 6 colors from the set
+        const lowerColors = colors.slice(0, 6);
+        lowerColors.forEach((color, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.backgroundColor = color;
+            lowerContainer.appendChild(bar);
+
+            // Add spacer if it's not the last color
+            if (index < lowerColors.length - 1) {
+                const spacer = document.createElement('div');
+                spacer.className = 'spacer';
+                lowerContainer.appendChild(spacer);
+            }
+        });
+    </script>
+</body>
+</html>

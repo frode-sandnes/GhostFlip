@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCH Color Calibration App</title>
+    <style>
+        /* Base Reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout Containers */
+        .section {
+            display: flex;
+            height: 50vh;
+            width: 100%;
+        }
+
+        .upper {
+            flex-direction: row; /* Vertical bars */
+        }
+
+        .lower {
+            flex-direction: column; /* Horizontal bars */
+        }
+
+        .bar {
+            flex: 1;
+        }
+
+        /* OKLCH Color Definitions (L C H) */
+        /* Upper Part: Lightness 0.5 (50%) */
+        .u1 { background-color: oklch(0.5 0 0); }      /* White/Gray */
+        .u2 { background-color: oklch(0.5 0.2 100); }  /* Yellow */
+        .u3 { background-color: oklch(0.5 0.2 200); }  /* Cyan */
+        .u4 { background-color: oklch(0.5 0.2 140); }  /* Green */
+        .u5 { background-color: oklch(0.5 0.2 330); }  /* Magenta */
+        .u6 { background-color: oklch(0.5 0.2 29); }   /* Red */
+        .u7 { background-color: oklch(0.5 0.2 260); }  /* Blue */
+
+        /* Lower Part: Lightness 1.0 (100%) */
+        /* All will appear white as L=1.0 is maximum luminance */
+        .l1 { background-color: oklch(1.0 0 0); }
+        .l2 { background-color: oklch(1.0 0.2 100); }
+        .l3 { background-color: oklch(1.0 0.2 200); }
+        .l4 { background-color: oklch(1.0 0.2 140); }
+        .l5 { background-color: oklch(1.0 0.2 330); }
+
+        /* User UI for Wake Lock */
+        #lock-status {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: sans-serif;
+            pointer-events: none;
+            text-align: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="lock-status">Click anywhere to enable Wake Lock</div>
+
+    <div class="section upper">
+        <div class="bar u1"></div>
+        <div class="bar u2"></div>
+        <div class="bar u3"></div>
+        <div class="bar u4"></div>
+        <div class="bar u5"></div>
+        <div class="bar u6"></div>
+        <div class="bar u7"></div>
+    </div>
+
+    <div class="section lower">
+        <div class="bar l1"></div>
+        <div class="bar l2"></div>
+        <div class="bar l3"></div>
+        <div class="bar l4"></div>
+        <div class="bar l5"></div>
+    </div>
+
+    <script>
+        let wakeLock = null;
+
+        const requestWakeLock = async () => {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('lock-status').style.display = 'none';
+                    console.log('Wake Lock is active');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock was released');
+                    });
+                }
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+                document.getElementById('lock-status').textContent = "Wake Lock Failed";
+            }
+        };
+
+        // Wake lock requires user interaction (click)
+        window.addEventListener('click', requestWakeLock);
+
+        // Re-request when returning to tab
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+    </script>
+</body>
+</html>

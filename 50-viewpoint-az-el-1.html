@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sirkel Offset & Vinkel App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            z-index: 100;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 25px 60px;
+            font-size: 1.8rem;
+            color: white;
+            background: transparent;
+            border: 4px solid white;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #main-page {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Øvre del */
+        #upper-section {
+            border-bottom: 1px solid #222;
+        }
+
+        .circle-fixed {
+            width: 20vw;
+            height: 20vw;
+            border: 10px solid red;
+            border-radius: 50%;
+            background: transparent;
+            position: absolute;
+        }
+
+        #data-display {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            color: white;
+            font-size: 2rem;
+            line-height: 1.2;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Nedre del */
+        #lower-section {
+            background-color: black;
+            cursor: crosshair;
+        }
+
+        .right-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background-color: white;
+        }
+
+        #movable-disk {
+            width: 20vw;
+            height: 20vw;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            transition: transform 0.02s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">START</button>
+    </div>
+
+    <div id="main-page">
+        <div id="upper-section" class="section">
+            <div id="data-display">
+                X: 0, Y: 0<br>
+                AZI: 0°<br>
+                ELE: 0°
+            </div>
+            <div class="circle-fixed" id="ref-circle"></div>
+        </div>
+        
+        <div id="lower-section" class="section">
+            <div class="right-line"></div>
+            <div id="movable-disk"></div>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+        const landingPage = document.getElementById('landing-page');
+        const mainPage = document.getElementById('main-page');
+        const lowerSection = document.getElementById('lower-section');
+        const movableDisk = document.getElementById('movable-disk');
+        const dataDisplay = document.getElementById('data-display');
+        const refCircle = document.getElementById('ref-circle');
+
+        let centerX, centerY;
+        let y0; // Y-koordinat for sirkelen i øvre del
+
+        startBtn.addEventListener('click', () => {
+            noSleep.enable();
+            landingPage.style.display = 'none';
+            mainPage.style.display = 'flex';
+            
+            initCoordinates();
+
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+
+        function initCoordinates() {
+            const lowerRect = lowerSection.getBoundingClientRect();
+            centerX = lowerRect.left + lowerRect.width / 2;
+            centerY = lowerRect.top + lowerRect.height / 2;
+
+            const upperRect = refCircle.getBoundingClientRect();
+            // y0 er sentrum av den faste sirkelen relativt til viewport
+            y0 = upperRect.top + upperRect.height / 2;
+        }
+
+        function update(e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            // X-Y Offset fra startposisjon (senter i nedre del)
+            const dx = clientX - centerX;
+            const dy = clientY - centerY;
+
+            // Flytt disk
+            movableDisk.style.transform = `translate(${dx}px, ${dy}px)`;
+
+            // Beregninger
+            // 1. Azimuth (atan2 gir radianer, konverterer til grader)
+            // Bruker dy og dx. Merk: atan2(y, x)
+            const azimuth = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            // 2. Elevation: tan(y0, y1) -> y1 = y-offset - y0
+            // Tolker din beskrivelse som Math.atan2(y1, y0)
+            const y1 = dy - y0;
+            const elevation = Math.atan2(y1, y0) * (180 / Math.PI);
+
+            // Oppdater display
+            dataDisplay.innerHTML = `
+                X: ${Math.round(dx)}, Y: ${Math.round(dy)}<br>
+                AZI: ${azimuth.toFixed(1)}°<br>
+                ELE: ${elevation.toFixed(1)}°
+            `;
+        }
+
+        // Mus-bevegelse og klikk
+        lowerSection.addEventListener('mousemove', update);
+        lowerSection.addEventListener('mousedown', update);
+
+        // Touch-bevegelse
+        lowerSection.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            update(e);
+        }, { passive: false });
+        
+        lowerSection.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            update(e);
+        }, { passive: false });
+
+        window.addEventListener('resize', initCoordinates);
+    </script>
+</body>
+</html>

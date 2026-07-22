@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCL Color Lightness Gradients</title>
+    <style>
+        /* Full-screen reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Divide screen into two equal halves */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        /* Top: Vertical Blue Bars */
+        .upper {
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .blue-bar {
+            height: 100%;
+            width: calc(100vw / 9);
+            /* OKLCH: Lightness 0-100%, Chroma 0.15, Hue 250 (Blue) */
+            background: linear-gradient(to top, oklch(0% 0.15 250), oklch(100% 0.15 250));
+        }
+
+        /* Bottom: Horizontal Green Bars */
+        .lower {
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .green-bar {
+            width: 100%;
+            height: calc(50vh / 9);
+            /* OKLCH: Lightness 0-100%, Chroma 0.15, Hue 140 (Green) */
+            background: linear-gradient(to right, oklch(0% 0.15 140), oklch(100% 0.15 140));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper" id="blue-container"></div>
+
+    <div class="section lower" id="green-container"></div>
+
+    <script>
+        const blueContainer = document.getElementById('blue-container');
+        const greenContainer = document.getElementById('green-container');
+
+        // Generate 5 bars for each container
+        for (let i = 0; i < 5; i++) {
+            const vBar = document.createElement('div');
+            vBar.className = 'blue-bar';
+            blueContainer.appendChild(vBar);
+
+            const hBar = document.createElement('div');
+            hBar.className = 'green-bar';
+            greenContainer.appendChild(hBar);
+        }
+    </script>
+</body>
+</html>

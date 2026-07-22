@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Offset Calibration</title>
+    <style>
+        /* Reset and Full Screen Setup */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+        }
+
+        /* Divide screen into equal halves */
+        .section {
+            width: 100vw;
+            height: 50vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* Top Part: Very large font readout */
+        #offset-display {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: clamp(2rem, 10vw, 6rem); /* Responsive large font */
+            font-weight: 900;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Bottom Right Button */
+        #move-btn {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #222;
+            color: white;
+            border: 2px solid white;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+        }
+
+        #move-btn:hover { background-color: #444; }
+        #move-btn:active { background-color: green; border-color: lime; }
+    </style>
+</head>
+<body>
+
+    <div class="section">
+        <div id="offset-display">X: 0<br>Y: 0</div>
+        <canvas id="upper-canvas"></canvas>
+    </div>
+
+    <div class="section">
+        <canvas id="lower-canvas"></canvas>
+        <button id="move-btn">Randomize Offset</button>
+    </div>
+
+    <script>
+        const canvasU = document.getElementById('upper-canvas');
+        const canvasL = document.getElementById('lower-canvas');
+        const display = document.getElementById('offset-display');
+        const btn = document.getElementById('move-btn');
+
+        const ctxU = canvasU.getContext('2d');
+        const ctxL = canvasL.getContext('2d');
+
+        let width, height, centerX, centerY;
+        const radius = 70;
+        const strokeWidth = 12;
+
+        // Current offset for the Upper Green Circle
+        let offsetX = 0;
+        let offsetY = 0;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight / 2;
+            centerX = width / 2;
+            centerY = height / 2;
+
+            canvasU.width = width;
+            canvasU.height = height;
+            canvasL.width = width;
+            canvasL.height = height;
+
+            draw();
+        }
+
+        function drawCircle(ctx, x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+        }
+
+        function draw() {
+            // Clear both canvases
+            ctxU.clearRect(0, 0, width, height);
+            ctxL.clearRect(0, 0, width, height);
+
+            // 1. Draw Green Circle (Upper) with Offset
+            drawCircle(ctxU, centerX + offsetX, centerY + offsetY, '#00ff00');
+
+            // 2. Draw Red Circle (Lower) Fixed in Center
+            drawCircle(ctxL, centerX, centerY, '#ff0000');
+
+            // 3. Update Readout Text
+            display.innerHTML = `X: ${Math.round(offsetX)}<br>Y: ${Math.round(offsetY)}`;
+        }
+
+        function randomize() {
+            // Random offset within roughly 30% of the screen half
+            const rangeX = width * 0.3;
+            const rangeY = height * 0.3;
+            offsetX = (Math.random() - 0.5) * rangeX;
+            offsetY = (Math.random() - 0.5) * rangeY;
+            draw();
+        }
+
+        window.addEventListener('resize', resize);
+        btn.addEventListener('click', randomize);
+
+        // Initialize
+        resize();
+        randomize();
+    </script>
+</body>
+</html>

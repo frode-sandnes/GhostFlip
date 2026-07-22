@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Space App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden; /* Strict viewport containment */
+            font-family: sans-serif;
+        }
+
+        /* Landing Screen */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: black;
+            z-index: 100;
+        }
+
+        #start-btn {
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            color: white;
+            background: transparent;
+            border: 2px solid white;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s ease;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Main Layout */
+        #main-page {
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1; /* Splits the screen into two equal halves */
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Upper Section - window.png */
+        #upper-section img {
+            width: 100%;
+            height: 100%;
+            bottom: 0;
+            object-fit: cover;
+            filter: brightness(1);
+            /* Scale in Y-direction by 1.3 */
+            /*transform: scaleY(1.3);*/
+        }
+
+        /* Lower Section - indoor.png */
+        #lower-section img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Double brightness + 180-degree rotation */
+            filter: brightness(1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">START</button>
+    </div>
+
+    <div id="main-page">
+        <div id="upper-section" class="section">
+            <img src="tennis-net2.png" alt="Window View">
+        </div>
+        <div id="lower-section" class="section">
+            <img src="tennis-court2.png" alt="Indoor View">
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+        const landingPage = document.getElementById('landing-page');
+        const mainPage = document.getElementById('main-page');
+
+        startBtn.addEventListener('click', function() {
+            // Enable NoSleep (requires user interaction)
+            noSleep.enable();
+
+            // Transition UI
+            landingPage.style.display = 'none';
+            mainPage.style.display = 'flex';
+
+            // Optional: Auto-request Fullscreen for immersive effect
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+
+</body>
+</html>

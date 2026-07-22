@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Procedural City Mirror</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000; overflow: hidden; color: #fff;
+            user-select: none; touch-action: none;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        canvas {
+            width: 100%;
+            height: 50%;
+            display: block;
+        }
+
+        /* The Subsurface mirror effect */
+        #canvas-tunnel {
+            border-top: 2px solid #333;
+            transform: scaleY(-1); 
+            cursor: grab;
+        }
+        
+        #canvas-tunnel:active { cursor: grabbing; }
+
+        .label {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="label" style="top: 10px; left: 10px; color: #44aaff;">Street Level [Parallax 1.5x]</div>
+        <canvas id="canvas-street"></canvas>
+        
+        <div class="label" style="bottom: 10px; left: 10px; color: #fff;">Tunnel Level [1.0x / Mirrored]</div>
+        <canvas id="canvas-tunnel"></canvas>
+    </div>
+
+<script>
+/** * Procedural Configuration
+ */
+const GRID_SIZE = 160;
+const STREET_NAMES = ["Lexington", "Broad", "Avenue A", "Vector Dr", "Main", "Industrial", "E-72", "Horizon"];
+const STATION_NAMES = ["Hub-Alpha", "Core-01", "Nexus", "Deep-Gate", "Sector-9", "Terminal"];
+
+const state = {
+    offX: 0,
+    offY: 0,
+    isDragging: false,
+    lastMouse: { x: 0, y: 0 },
+    time: 0
+};
+
+const cStreet = document.getElementById('canvas-street');
+const cTunnel = document.getElementById('canvas-tunnel');
+const ctxS = cStreet.getContext('2d');
+const ctxT = cTunnel.getContext('2d');
+
+function resize() {
+    cStreet.width = cTunnel.width = window.innerWidth;
+    cStreet.height = cTunnel.height = window.innerHeight / 2;
+}
+
+window.addEventListener('resize', resize);
+resize();
+
+/**
+ * Seeded Randomness for Infinite Consistency
+ */
+function seededRandom(x, y, seed = 123) {
+    const val = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453;
+    return val - Math.floor(val);
+}
+
+/**
+ * Render Street Level (Upper)
+ */
+function drawStreet(ctx, ox, oy) {
+    const pOx = ox * 1.5; // Parallax
+    const pOy = oy * 1.5;
+    
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.strokeStyle = '#2266ff';
+    ctx.lineWidth = 5;
+
+    const startGridX = Math.floor(-pOx / GRID_SIZE);
+    const endGridX = startGridX + Math.ceil(ctx.canvas.width / GRID_SIZE) + 1;
+    const startGridY = Math.floor(-pOy / GRID_SIZE);
+    const endGridY = startGridY + Math.ceil(ctx.canvas.height / GRID_SIZE) + 1;
+
+    for (let x = startGridX; x <= endGridX; x++) {
+        for (let y = startGridY; y <= endGridY; y++) {
+            const posX = x * GRID_SIZE + pOx;
+            const posY = y * GRID_SIZE + pOy;
+
+            // Draw Block Outline
+            ctx.strokeRect(posX + 10, posY + 10, GRID_SIZE - 20, GRID_SIZE - 20);
+
+            // Procedural Building Footprint
+            const r = seededRandom(x, y);
+            if (r > 0.4) {
+                ctx.fillStyle = '#111';
+                ctx.fillRect(posX + 30, posY + 30, GRID_SIZE - 60, GRID_SIZE - 60);
+            }
+
+            // Label
+            if (r > 0.8) {
+                ctx.fillStyle = '#2266ff';
+                ctx.font = '10px Arial';
+                ctx.fillText(STREET_NAMES[Math.floor(r * STREET_NAMES.length)], posX + 15, posY + 25);
+            }
+
+            // Dynamic Traffic (Cars)
+            const trafficTime = (state.time * (0.5 + r)) % GRID_SIZE;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(posX + trafficTime, posY + 2, 8, 4); // Horizontal traffic
+            ctx.fillRect(posX + 2, posY + (GRID_SIZE - trafficTime), 4, 8); // Vertical traffic
+        }
+    }
+}
+
+/**
+ * Render Tunnel Level (Lower)
+ */
+function drawTunnel(ctx, ox, oy) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 5;
+
+    const startGridX = Math.floor(-ox / GRID_SIZE);
+    const endGridX = startGridX + Math.ceil(ctx.canvas.width / GRID_SIZE) + 1;
+    const startGridY = Math.floor(-oy / GRID_SIZE);
+    const endGridY = startGridY + Math.ceil(ctx.canvas.height / GRID_SIZE) + 1;
+
+    for (let x = startGridX; x <= endGridX; x++) {
+        for (let y = startGridY; y <= endGridY; y++) {
+            const posX = x * GRID_SIZE + ox;
+            const posY = y * GRID_SIZE + oy;
+            const r = seededRandom(x, y, 999);
+
+            // Draw Schematic Lines
+            ctx.beginPath();
+            ctx.moveTo(posX + GRID_SIZE/2, posY);
+            ctx.lineTo(posX + GRID_SIZE/2, posY + GRID_SIZE);
+            ctx.moveTo(posX, posY + GRID_SIZE/2);
+            ctx.lineTo(posX + GRID_SIZE, posY + GRID_SIZE/2);
+            ctx.stroke();
+
+            // Station Markers
+            if (r > 0.7) {
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(posX + GRID_SIZE/2, posY + GRID_SIZE/2, 10, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                // Note: Text is mirrored because of CSS scaleY(-1), 
+                // but we keep logic consistent for a "schematic" feel.
+                ctx.fillText(STATION_NAMES[Math.floor(r * STATION_NAMES.length)], posX + GRID_SIZE/2 + 15, posY + GRID_SIZE/2);
+                
+                // Pulsing Trains
+                const pulse = Math.abs(Math.sin(state.time / 20)) * 5;
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(posX + GRID_SIZE/2, posY + GRID_SIZE/2, 4 + pulse, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+    }
+}
+
+/**
+ * Interaction Logic
+ */
+function handleStart(e) {
+    state.isDragging = true;
+    const pos = e.touches ? e.touches[0] : e;
+    state.lastMouse = { x: pos.clientX, y: pos.clientY };
+}
+
+function handleMove(e) {
+    if (!state.isDragging) return;
+    const pos = e.touches ? e.touches[0] : e;
+    const dx = pos.clientX - state.lastMouse.x;
+    const dy = pos.clientY - state.lastMouse.y;
+    
+    state.offX += dx;
+    // Note: Y is inverted for dragging because of scaleY(-1) on lower canvas
+    state.offY -= dy; 
+
+    state.lastMouse = { x: pos.clientX, y: pos.clientY };
+}
+
+function handleEnd() { state.isDragging = false; }
+
+cTunnel.addEventListener('mousedown', handleStart);
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', handleEnd);
+
+cTunnel.addEventListener('touchstart', handleStart);
+window.addEventListener('touchmove', handleMove);
+window.addEventListener('touchend', handleEnd);
+
+/**
+ * Main Loop
+ */
+function loop() {
+    state.time += 1;
+    drawStreet(ctxS, state.offX, state.offY);
+    drawTunnel(ctxT, state.offX, state.offY);
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

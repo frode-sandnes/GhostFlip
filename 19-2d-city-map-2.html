@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Infinite Urban & Subsurface Parallax</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            background-color: #000;
+            overflow: hidden; display: flex; flex-direction: column;
+            touch-action: none; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .section {
+            width: 100vw; height: 50vh;
+            position: relative; overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* Lower section is mirrored vertically */
+        .lower {
+            transform: scaleY(-1);
+            border-top: 2px solid #222;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .label {
+            position: absolute; padding: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 11px; letter-spacing: 2px;
+            text-transform: uppercase; pointer-events: none; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="section upper">
+        <div class="label">Surface Topography [Interactive]</div>
+        <canvas id="canvas-street"></canvas>
+    </div>
+
+    <div class="section lower">
+        <div class="label" style="bottom: 0; transform: scaleY(-1);">Subsurface Transit [Mirrored]</div>
+        <canvas id="canvas-tunnel"></canvas>
+    </div>
+
+    <script>
+        const canvasS = document.getElementById('canvas-street');
+        const canvasT = document.getElementById('canvas-tunnel');
+        const ctxS = canvasS.getContext('2d');
+        const ctxT = canvasT.getContext('2d');
+
+        let width, height;
+        let mapX = 5000, mapY = 5000; 
+        let isDragging = false, lastX, lastY;
+        let frame = 0;
+
+        const STREETS = ["Lexington", "Madison", "Broadway", "Oak", "Main", "Pacific", "Solaris", "Veridian"];
+        const STATIONS = ["Alpha", "Nexus", "Core", "Terminal", "Outpost 7", "Sector G"];
+
+        // Seeded Hash for infinite consistency
+        function hash(x, j) {
+            const h = Math.sin(x * 12.9898 + j * 78.233) * 43758.5453123;
+            return h - Math.floor(h);
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight / 2;
+            canvasS.width = width; canvasS.height = height;
+            canvasT.width = width; canvasT.height = height;
+        }
+
+        function drawStreetLayer() {
+            ctxS.fillStyle = "#000";
+            ctxS.fillRect(0, 0, width, height);
+            
+            const step = 180;
+            const offX = mapX % step;
+            const offY = mapY % step;
+            const gridX = Math.floor(-mapX / step);
+            const gridY = Math.floor(-mapY / step);
+
+            for (let i = gridX - 1; i < gridX + Math.ceil(width / step) + 1; i++) {
+                for (let j = gridY - 1; j < gridY + Math.ceil(height / step) + 1; j++) {
+                    const x = i * step + mapX;
+                    const y = j * step + mapY;
+                    const h = hash(i, j);
+
+                    // Roads
+                    ctxS.strokeStyle = "#1a1a1a";
+                    ctxS.lineWidth = 24;
+                    ctxS.strokeRect(x, y, step, step);
+
+                    // Traffic
+                    if (h > 0.3) {
+                        ctxS.fillStyle = "#fff";
+                        const carPos = (frame * (1 + h) + h * 500) % step;
+                        if (h > 0.6) ctxS.fillRect(x + carPos, y + step/2 - 2, 6, 4); // Horiz
+                        else ctxS.fillRect(x + step/2 - 2, y + carPos, 4, 6); // Vert
+                    }
+
+                    // Buildings
+                    if (h > 0.2) {
+                        ctxS.fillStyle = `rgba(0, 255, 100, ${0.05 + h * 0.1})`;
+                        ctxS.strokeStyle = "#0f6";
+                        ctxS.lineWidth = 1;
+                        const bSize = step * 0.4;
+                        ctxS.fillRect(x + 20, y + 20, bSize, bSize);
+                        ctxS.strokeRect(x + 20, y + 20, bSize, bSize);
+                    }
+
+                    // Labels
+                    if (i % 2 === 0 && j % 2 === 0) {
+                        ctxS.fillStyle = "#555";
+                        ctxS.font = "10px monospace";
+                        ctxS.fillText(STREETS[Math.floor(h * STREETS.length)], x + 10, y + step - 10);
+                    }
+                }
+            }
+        }
+
+        function drawTunnelLayer() {
+            ctxT.fillStyle = "#050505";
+            ctxT.fillRect(0, 0, width, height);
+
+            const factor = 0.6; // Parallax ratio
+            const step = 250;
+            const tX = mapX * factor;
+            const tY = mapY * factor;
+            const gridX = Math.floor(-tX / step);
+            const gridY = Math.floor(-tY / step);
+
+            for (let i = gridX - 1; i < gridX + Math.ceil(width / step) + 1; i++) {
+                for (let j = gridY - 1; j < gridY + Math.ceil(height / step) + 1; j++) {
+                    const x = i * step + tX;
+                    const y = j * step + tY;
+                    const h = hash(i, j);
+
+                    const color = h > 0.5 ? "#f33" : "#33f";
+                    ctxT.strokeStyle = color;
+                    ctxT.lineWidth = 4;
+                    
+                    // Transit Lines
+                    ctxT.beginPath();
+                    ctxT.moveTo(x, y + step/2);
+                    ctxT.lineTo(x + step, y + step/2);
+                    if (h > 0.7) {
+                        ctxT.moveTo(x + step/2, y);
+                        ctxT.lineTo(x + step/2, y + step);
+                    }
+                    ctxT.stroke();
+
+                    // Transit Pods
+                    const trainPos = (frame * 2 + h * 1000) % step;
+                    ctxT.fillStyle = "#fff";
+                    ctxT.beginPath();
+                    ctxT.arc(x + trainPos, y + step/2, 3 + Math.sin(frame*0.1)*1, 0, Math.PI*2);
+                    ctxT.fill();
+
+                    // Stations
+                    if (h > 0.85) {
+                        ctxT.fillStyle = "#fff";
+                        ctxT.fillRect(x + step/2 - 8, y + step/2 - 8, 16, 16);
+                        ctxT.font = "9px monospace";
+                        ctxT.fillText(STATIONS[Math.floor(h * STATIONS.length)], x + step/2 + 12, y + step/2 + 4);
+                    }
+                }
+            }
+        }
+
+        function update() {
+            frame++;
+            drawStreetLayer();
+            drawTunnelLayer();
+            requestAnimationFrame(update);
+        }
+
+        // Interaction
+        function onStart(e) {
+            isDragging = true;
+            const p = e.touches ? e.touches[0] : e;
+            lastX = p.clientX; lastY = p.clientY;
+        }
+
+        function onMove(e) {
+            if (!isDragging) return;
+            const p = e.touches ? e.touches[0] : e;
+            mapX += (p.clientX - lastX);
+            mapY += (p.clientY - lastY);
+            lastX = p.clientX; lastY = p.clientY;
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('touchstart', onStart);
+        window.addEventListener('touchmove', onMove);
+        window.addEventListener('touchend', () => isDragging = false);
+
+        resize();
+        update();
+    </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rectangle Height Controller</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nosleep/0.12.0/NoSleep.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none; /* Forhindrer zoom/scroll ved berøring */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* Startskjerm */
+        #landing-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            z-index: 100;
+            background: black;
+        }
+
+        #start-btn {
+            padding: 25px 60px;
+            font-size: 1.8rem;
+            color: white;
+            background: transparent;
+            border: 4px solid white;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        /* Hovedlayout */
+        #app-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .section {
+            flex: 1; /* 50/50 split */
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Øvre del */
+        #upper-section {
+            border-bottom: 1px solid #333;
+        }
+
+        .red-line {
+            position: absolute;
+            width: 100%;
+            height: 10px;
+            background-color: red;
+            left: 0;
+        }
+
+        /* Posisjonert 10% av viewport width over/under senter */
+        .line-top { bottom: calc(50% + 10vw); }
+        .line-bottom { top: calc(50% + 10vw); }
+
+        #height-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 4rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        /* Nedre del */
+        #lower-section {
+            background-color: black;
+        }
+
+        .white-vertical-line {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background-color: white;
+            z-index: 5;
+        }
+
+        #dynamic-rect {
+            position: absolute;
+            top: 10vw; /* Starter 10% av viewport width fra toppen */
+            left: 0;
+            width: 100%;
+            background-color: white;
+            height: 20vw; /* Start-høyde */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <button id="start-btn">START APP</button>
+    </div>
+
+    <div id="app-container">
+        <div id="upper-section" class="section">
+            <div id="height-display">Høyde: 20.0%</div>
+            <div class="red-line line-top"></div>
+            <div class="red-line line-bottom"></div>
+        </div>
+        
+        <div id="lower-section" class="section">
+            <div class="white-vertical-line"></div>
+            <div id="dynamic-rect"></div>
+        </div>
+    </div>
+
+    <script>
+        const noSleep = new NoSleep();
+        const startBtn = document.getElementById('start-btn');
+        const landingPage = document.getElementById('landing-page');
+        const appContainer = document.getElementById('app-container');
+        const lowerSection = document.getElementById('lower-section');
+        const dynamicRect = document.getElementById('dynamic-rect');
+        const heightDisplay = document.getElementById('height-display');
+
+        let rectTopY; // Y-posisjon hvor rektangelet starter i nedre del
+
+        startBtn.addEventListener('click', () => {
+            noSleep.enable();
+            landingPage.style.display = 'none';
+            appContainer.style.display = 'flex';
+            
+            calculateRectTop();
+
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+
+        function calculateRectTop() {
+            const rect = lowerSection.getBoundingClientRect();
+            const vwInPx = window.innerWidth;
+            rectTopY = rect.top + (0.10 * vwInPx); // 10% av vw
+        }
+
+        function updateHeight(e) {
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const vwInPx = window.innerWidth;
+
+            // Beregn ny høyde basert på avstand fra rektangelets startpunkt
+            let newHeightPx = clientY - rectTopY;
+            
+            // Forhindre negativ høyde
+            if (newHeightPx < 0) newHeightPx = 0;
+
+            // Oppdater rektangelet
+            dynamicRect.style.height = `${newHeightPx}px`;
+
+            // Beregn høyde i prosent av Viewport Width (vw) for display
+            const heightInVw = (newHeightPx / vwInPx) * 100;
+            heightDisplay.textContent = `Høyde: ${heightInVw.toFixed(1)}%`;
+        }
+
+        // Event listeners for samhandling
+        lowerSection.addEventListener('mousedown', updateHeight);
+        lowerSection.addEventListener('mousemove', (e) => {
+            if (e.buttons === 1) updateHeight(e); // Oppdater kun hvis musen er trykket ned
+        });
+
+        lowerSection.addEventListener('touchstart', updateHeight, { passive: false });
+        lowerSection.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Hindrer rulling
+            updateHeight(e);
+        }, { passive: false });
+
+        // Juster verdier hvis skjermen endrer størrelse eller roteres
+        window.addEventListener('resize', calculateRectTop);
+
+    </script>
+</body>
+</html>
