@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Flip Phone - Reflector Glass Screen Reflections</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+    }
+
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #ui-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      padding: 15px 25px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+    }
+
+    .slider-label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .slider-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 260px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .ticks {
+      position: relative;
+      width: 100%;
+      height: 15px;
+      font-size: 10px;
+      color: #ccc;
+      margin-top: 4px;
+    }
+
+    .ticks span {
+      position: absolute;
+      transform: translateX(-50%);
+    }
+
+    .ticks span:nth-child(1) { left: 0%; transform: translateX(0); }
+    .ticks span:nth-child(2) { left: 25%; }
+    .ticks span:nth-child(3) { left: 50%; }
+    .ticks span:nth-child(4) { left: 100%; transform: translateX(-100%); }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+</head>
+<body>
+
+  <div id="canvas-container"></div>
+
+  <div id="ui-container">
+    <div class="slider-label">Phone Fold Angle: <span id="angle-val">90</span>°</div>
+    <div class="slider-wrapper">
+      <input type="range" id="fold-slider" min="0" max="180" value="90" step="1">
+      <div class="ticks">
+        <span>0°</span>
+        <span>45°</span>
+        <span>90°</span>
+        <span>180°</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. Scene & Renderer ---
+    const container = document.getElementById('canvas-container');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111116);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 8.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // --- 2. Controls & Lighting ---
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.0);
+    dirLight1.position.set(5, 10, 7);
+    scene.add(dirLight1);
+
+    // --- 3. Image Textures ---
+    const textureLoader = new THREE.TextureLoader();
+    const topScreenTex = textureLoader.load('tennis-net.png');
+    const bottomScreenTex = textureLoader.load('tennis-court.png');
+
+    topScreenTex.encoding = THREE.sRGBEncoding;
+    bottomScreenTex.encoding = THREE.sRGBEncoding;
+
+    // --- 4. Phone Dimensions & Base Materials ---
+    const halfHeight = 2.2;
+    const phoneWidth = 2.2;
+    const phoneDepth = 0.15;
+
+    const bodyMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0xff00ff, 
+      roughness: 0.3, 
+      metalness: 0.5 
+    });
+
+    const screenGeo = new THREE.PlaneGeometry(phoneWidth * 0.9, halfHeight * 0.95);
+
+    const topScreenMat = new THREE.MeshBasicMaterial({ map: topScreenTex });
+    const bottomScreenMat = new THREE.MeshBasicMaterial({ map: bottomScreenTex });
+
+/*
+// Ensure screen textures DO NOT render when viewed from the back
+const topScreenMat = new THREE.MeshBasicMaterial({ 
+  map: topScreenTex, 
+  side: THREE.FrontSide // Automatically culls the back face
+});
+
+const bottomScreenMat = new THREE.MeshBasicMaterial({ 
+  map: bottomScreenTex, 
+  side: THREE.FrontSide 
+});*/
+
+    // --- 5. Custom Reflector Glass Factory Function ---
+    function createGlassReflector(geometry) {
+      const reflector = new THREE.Reflector(geometry, {
+        clipBias: 0.003,
+        textureWidth: window.innerWidth * window.devicePixelRatio,
+        textureHeight: window.innerHeight * window.devicePixelRatio,
+        color: 0x888888
+      });
+
+      reflector.material.transparent = true;
+
+      // Inject Shader Modifications for semi-transparent tinting & reflection intensity
+      reflector.material.fragmentShader = reflector.material.fragmentShader.replace(
+        'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
+        `
+          vec3 reflectionColor = blendOverlay( base.rgb, color );
+          vec3 glassTint = vec3(0.02, 0.05, 0.08); 
+          
+          // Combine reflection intensity with background glass opacity
+          gl_FragColor = vec4( reflectionColor + glassTint, 0.45 );
+        `
+      );
+
+      return reflector;
+    }
+
+    // --- 6. Construct Phone Hierarchy ---
+    const phoneGroup = new THREE.Group();
+    phoneGroup.rotation.x = THREE.MathUtils.degToRad(-25); // Tilt back
+    scene.add(phoneGroup);
+
+    // --- Bottom Half ---
+    const bottomMesh = new THREE.Mesh(new THREE.BoxGeometry(phoneWidth, halfHeight, phoneDepth), bodyMaterial);
+    bottomMesh.position.set(0, -halfHeight / 2, 0);
+
+    const bottomScreenMesh = new THREE.Mesh(screenGeo, bottomScreenMat);
+    bottomScreenMesh.position.set(0, -halfHeight / 2, phoneDepth / 2 + 0.001);
+
+    const bottomGlass = createGlassReflector(screenGeo);
+    bottomGlass.position.set(0, -halfHeight / 2, phoneDepth / 2 + 0.005);
+
+    const bottomPart = new THREE.Group();
+    bottomPart.add(bottomMesh);
+    bottomPart.add(bottomScreenMesh);
+    bottomPart.add(bottomGlass);
+    phoneGroup.add(bottomPart);
+
+    // --- Top Half ---
+    const topHingeGroup = new THREE.Group();
+    topHingeGroup.rotation.x = THREE.MathUtils.degToRad(90); // Default 90 deg fold
+
+    const topMesh = new THREE.Mesh(new THREE.BoxGeometry(phoneWidth, halfHeight, phoneDepth), bodyMaterial);
+    topMesh.position.set(0, halfHeight / 2, 0);
+
+    const topScreenMesh = new THREE.Mesh(screenGeo, topScreenMat);
+    topScreenMesh.position.set(0, halfHeight / 2, phoneDepth / 2 + 0.001);
+
+    const topGlass = createGlassReflector(screenGeo);
+    topGlass.position.set(0, halfHeight / 2, phoneDepth / 2 + 0.005);
+
+    topHingeGroup.add(topMesh);
+    topHingeGroup.add(topScreenMesh);
+    topHingeGroup.add(topGlass);
+    phoneGroup.add(topHingeGroup);
+
+    // --- 7. Slider Controls ---
+    const slider = document.getElementById('fold-slider');
+    const angleVal = document.getElementById('angle-val');
+
+slider.addEventListener('input', (e) => {
+  const angleDeg = parseFloat(e.target.value);
+  angleVal.textContent = angleDeg;
+  
+  const foldAngleRad = THREE.MathUtils.degToRad(180 - angleDeg);
+  topHingeGroup.rotation.x = foldAngleRad;
+
+  // Hide inner screen elements when phone is completely closed (or nearly closed)
+  const isClosed = angleDeg <= 1; 
+
+  topScreenMesh.visible = !isClosed;
+  bottomScreenMesh.visible = !isClosed;
+  topGlass.visible = !isClosed;
+  bottomGlass.visible = !isClosed;
+});
+
+   /* slider.addEventListener('input', (e) => {
+      const angleDeg = parseFloat(e.target.value);
+      angleVal.textContent = angleDeg;
+      
+      const foldAngleRad = THREE.MathUtils.degToRad(180 - angleDeg);
+      topHingeGroup.rotation.x = foldAngleRad;
+    });*/
+
+    // --- 8. Window Resize ---
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // --- 9. Render Loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
