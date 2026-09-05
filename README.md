@@ -8,5 +8,13 @@ The demonstration illustrates how a foldable flip phone with two displays can be
 Use a flip phone and go to the demo page:
 https://frode-sandnes.github.io/GhostFlip/
 
-There is also an interactive explanation of the efffect here:
+There is also an interactive explanation of the Peppers Ghost efffect here:
 https://frode-sandnes.github.io/GhostFlip/pepper2f.html
+
+Demo of the 45-degree effect:
+https://frode-sandnes.github.io/GhostFlip/flip-packman-45.html
+
+Demo of the 90-degree effect:
+https://frode-sandnes.github.io/GhostFlip/fkip-tennis-court-90.html
+
+[![Watch the video](https://youtube.com)](https://youtube.com)
