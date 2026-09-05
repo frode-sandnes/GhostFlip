@@ -15,6 +15,6 @@ Demo of the 45-degree effect:
 https://frode-sandnes.github.io/GhostFlip/flip-packman-45.html
 
 Demo of the 90-degree effect:
-https://frode-sandnes.github.io/GhostFlip/fkip-tennis-court-90.html
+https://frode-sandnes.github.io/GhostFlip/flip-tennis-court-90.html
 
 [![Watch the demo video]([https://youtube.com](https://youtu.be/99tC873f0EI))]([https://youtube.com](https://youtu.be/99tC873f0EI))
